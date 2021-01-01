@@ -40,6 +40,9 @@ endif
 if !exists('g:monotone_contrast_factor')
 	let g:monotone_contrast_factor = 1
 endif
+if !exists('g:monotone_brightness_factor')
+	let g:monotone_brightness_factor = 1
+endif
 
 let g:loaded_monotone = 1
 
@@ -74,29 +77,29 @@ function s:Hue2RGB(v1, v2, vH)
 	return a:v1
 endfunction
 
-function s:Shade(color, offset)
+function s:Shade(color, offset, brightness_factor)
 	let h = a:color[0]
 	let s = a:color[1]
-	let l = a:color[2] - a:offset
+	let l = (a:color[2] - a:offset) * a:brightness_factor
 	let l = l < 1 ? 1 : l > 100 ? 100 : l
 	return s:HSLToHex(h, s, l)
 endfunction
 
-function s:MonotoneColors(color, secondary_hue_offset, emphasize_comments, emphasize_whitespace, contrast_factor)
-	let s:color_normal   = s:Shade(a:color, 0)
-	let s:color_dark_0   = s:Shade(a:color, 60 * a:contrast_factor)
-	let s:color_dark_1   = s:Shade(a:color, 69 * a:contrast_factor)
-	let s:color_dark_2   = s:Shade(a:color, 73 * a:contrast_factor)
-	let s:color_dark_3   = s:Shade(a:color, 75 * a:contrast_factor)
-	let s:color_bright_0 = s:Shade(a:color, 46)
-	let s:color_bright_1 = s:Shade(a:color, 36)
-	let s:color_bright_2 = s:Shade(a:color, 22)
+function s:MonotoneColors(color, secondary_hue_offset, emphasize_comments, emphasize_whitespace, contrast_factor, brightness_factor)
+	let s:color_normal   = s:Shade(a:color, 0, a:brightness_factor)
+	let s:color_dark_0   = s:Shade(a:color, 60 * a:contrast_factor, 1)
+	let s:color_dark_1   = s:Shade(a:color, 69 * a:contrast_factor, 1)
+	let s:color_dark_2   = s:Shade(a:color, 73 * a:contrast_factor, 1)
+	let s:color_dark_3   = s:Shade(a:color, 75 * a:contrast_factor, 1)
+	let s:color_bright_0 = s:Shade(a:color, 46, a:brightness_factor)
+	let s:color_bright_1 = s:Shade(a:color, 36, a:brightness_factor)
+	let s:color_bright_2 = s:Shade(a:color, 22, a:brightness_factor)
 
-	let s:color_hl_1   = s:HSLToHex(a:secondary_hue_offset,       90, a:color[2] - 20)
-	let s:color_hl_2   = s:HSLToHex(a:secondary_hue_offset + 35,  90, a:color[2] - 20)
-	let s:color_hl_3   = s:HSLToHex(a:secondary_hue_offset + 200, 90, a:color[2] - 20)
-	let s:color_eob    = s:HSLToHex(a:secondary_hue_offset,       40, a:color[2] - 50)
-	let s:color_nt     = s:HSLToHex(a:secondary_hue_offset + 10,  45, a:color[2] - 40)
+	let s:color_hl_1   = s:HSLToHex(a:secondary_hue_offset,       90 * a:brightness_factor, (a:color[2] - 20) * a:brightness_factor)
+	let s:color_hl_2   = s:HSLToHex(a:secondary_hue_offset + 35,  90 * a:brightness_factor, (a:color[2] - 20) * a:brightness_factor)
+	let s:color_hl_3   = s:HSLToHex(a:secondary_hue_offset + 200, 90 * a:brightness_factor, (a:color[2] - 20) * a:brightness_factor)
+	let s:color_eob    = s:HSLToHex(a:secondary_hue_offset,       40 * a:brightness_factor, (a:color[2] - 50) * a:brightness_factor)
+	let s:color_nt     = s:HSLToHex(a:secondary_hue_offset + 10,  45 * a:brightness_factor, (a:color[2] - 40) * a:brightness_factor)
 
 	hi clear
 	syntax reset
@@ -261,19 +264,22 @@ call s:MonotoneColors(
 	\ g:monotone_secondary_hue_offset,
 	\ g:monotone_emphasize_comments,
 	\ g:monotone_emphasize_whitespace,
-	\ g:monotone_contrast_factor)
+	\ g:monotone_contrast_factor,
+	\ g:monotone_brightness_factor)
 
 function g:Monotone(h, s, l, ...)
 	let l:secondary_hue_offset = a:0 > 0 ? a:1 : g:monotone_secondary_hue_offset
 	let l:emphasize_comments = a:0 > 1 ? a:2 : g:monotone_emphasize_comments
 	let l:emphasize_whitespace = a:0 > 2 ? a:3 : g:monotone_emphasize_whitespace
 	let l:contrast_factor = a:0 > 3 ? str2float(a:4) : g:monotone_contrast_factor
+	let l:brightness_factor = a:0 > 4 ? str2float(a:5) : g:monotone_brightness_factor
 	call s:MonotoneColors(
 		\ [a:h, a:s, a:l],
 		\ l:secondary_hue_offset,
 		\ l:emphasize_comments,
 		\ l:emphasize_whitespace,
-		\ l:contrast_factor)
+		\ l:contrast_factor,
+		\ l:brightness_factor)
 endfunction
 
 command! -nargs=+ Monotone call g:Monotone(<f-args>)
